@@ -1,0 +1,56 @@
+# 📊 Analyse Instagram - Boutique eCommerce Ouest-Africaine
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+import numpy as np
+
+# Charger les données
+df = pd.read_csv("C:/Users/lenovo/Downloads/instagram_boutique_afrique_ouest.csv")
+
+# Prétraitement
+df["Date"] = pd.to_datetime(df["Date"])
+df["Heure"] = pd.to_datetime(df["Heure"], format="%H:%M").dt.hour
+df["Jour"] = df["Date"].dt.day_name()
+df["Mois"] = df["Date"].dt.strftime("%B")
+
+# Engagement moyen par heure
+engagement_par_heure = df.groupby("Heure")[["Likes", "Commentaires"]].mean()
+
+# Engagement moyen par jour
+engagement_par_jour = df.groupby("Jour")[["Likes", "Commentaires"]].mean().reindex(
+    ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+)
+
+# Hashtags populaires
+all_hashtags = ", ".join(df["Hashtags"].fillna("")).replace("#", "").split(", ")
+hashtag_counts = pd.Series(all_hashtags).value_counts().head(15)
+# Produits les plus promus (extraction fictive)
+df["Produit"] = df["Légende"].str.extract(r"produit\s?:\s?(.+)", expand=False)
+top_produits = df["Produit"].value_counts().head(10)
+
+# Visualisations
+fig, axs = plt.subplots(2, 2, figsize=(16, 12))
+
+# 1. Engagement par heure
+sns.lineplot(data=engagement_par_heure, ax=axs[0, 0])
+axs[0, 0].set_title("Engagement moyen par heure de publication")
+axs[0, 0].set_ylabel("Nombre moyen")
+
+# 2. Engagement par jour
+engagement_par_jour.plot(kind="bar", ax=axs[0, 1])
+axs[0, 1].set_title("Engagement moyen par jour")
+axs[0, 1].set_ylabel("Nombre moyen")
+
+# 3. Hashtags populaires
+hashtag_counts.plot(kind="barh", ax=axs[1, 0], color="teal")
+axs[1, 0].set_title("Top 15 des hashtags utilisés")
+axs[1, 0].invert_yaxis()
+# 4. Produits les plus promus
+top_produits.plot(kind="barh", ax=axs[1, 1], color="salmon")
+axs[1, 1].set_title("Produits les plus promus")
+axs[1, 1].invert_yaxis()
+
+plt.tight_layout()
+plt.show()
